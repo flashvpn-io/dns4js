@@ -12,9 +12,9 @@ describe("DnsHelper", () => {
 
     it("should return null for a domain without TXT record", async () => {
       const result = await DnsHelper.lookupTxt("jetstream.site");
-      expect(result?.web).toBeUndefined();
-      expect(result?.aff).toBeUndefined();
-      expect(result?.api).toBeUndefined();
+      expect(result?.web).toHaveLength(0);
+      expect(result?.aff).toHaveLength(0);
+      expect(result?.api).toHaveLength(0);
     });
   });
 
