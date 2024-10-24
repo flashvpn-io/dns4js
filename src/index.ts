@@ -63,17 +63,17 @@ class DnsHelper {
       switch (key) {
         case "web":
           value.split(",").forEach((v) => {
-            web.push(DnsHelper.https + v);
+            web.push(v);
           });
           break;
         case "aff":
           value.split(",").forEach((v) => {
-            aff.push(DnsHelper.https + v);
+            aff.push(v);
           });
           break;
         case "api":
           value.split(",").forEach((v) => {
-            api.push(DnsHelper.https + v);
+            api.push(v);
           });
           break;
       }

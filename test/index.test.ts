@@ -43,8 +43,8 @@ describe("DnsHelper", () => {
         '"host=example.com:web=www.example.com:aff=affiliate.example.com:api=api.example.com"';
       const result = DnsHelper._parseData(data);
       expect(result).toEqual({
-        web: ["https://www.example.com"],
-        aff: ["https://affiliate.example.com"],
+        web: ["www.example.com"],
+        aff: ["affiliate.example.com"],
         api: ["api.example.com"],
       });
     });
