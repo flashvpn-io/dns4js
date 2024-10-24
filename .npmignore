@@ -2,3 +2,5 @@ src/
 test/
 rollup.config.js
 .gitignore
+tsconfig.json
+
