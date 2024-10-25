@@ -1,5 +1,3 @@
-import { get } from "https";
-
 export interface DnsRecord {
   web: string[];
   aff: string[];
@@ -7,7 +5,7 @@ export interface DnsRecord {
 }
 
 export class DnsHelper {
-  static timeoutMilliseconds = 1000;
+  static timeoutMilliseconds = 5000;
   static https = "https://";
 
   static _defaultDnsUrls: string[] = [
@@ -26,10 +24,10 @@ export class DnsHelper {
     for (const dnsUrl of dnsUrls) {
       try {
         const url = `${dnsUrl}?name=${host}&type=TXT`;
-        const response = await DnsHelper._httpGet(url, {
-          accept: "application/dns-json",
+        const response = await DnsHelper._fetchWithTimeout(url, {
+          headers: { accept: "application/dns-json" },
         });
-        const jsonResponse = JSON.parse(response);
+        const jsonResponse = await response.json();
 
         if (jsonResponse.Answer && jsonResponse.Answer.length > 0) {
           for (const answer of jsonResponse.Answer) {
@@ -62,19 +60,13 @@ export class DnsHelper {
       const [key, value] = part.split("=");
       switch (key) {
         case "web":
-          value.split(",").forEach((v) => {
-            web.push(v);
-          });
+          web = value.split(",");
           break;
         case "aff":
-          value.split(",").forEach((v) => {
-            aff.push(v);
-          });
+          aff = value.split(",");
           break;
         case "api":
-          value.split(",").forEach((v) => {
-            api.push(v);
-          });
+          api = value.split(",");
           break;
       }
     }
@@ -131,8 +123,8 @@ export class DnsHelper {
   ): Promise<string[]> {
     try {
       const url = `${dnsUrl}?${requestQuery}`;
-      const response = await DnsHelper._httpGet(url);
-      const jsonResponse = JSON.parse(response);
+      const response = await DnsHelper._fetchWithTimeout(url);
+      const jsonResponse = await response.json();
 
       const ips: string[] = [];
       if (jsonResponse.Answer) {
@@ -154,17 +146,24 @@ export class DnsHelper {
     }
   }
 
-  static _httpGet(
+  static async _fetchWithTimeout(
     url: string,
-    headers: Record<string, string> = {}
-  ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      get(url, { headers, timeout: DnsHelper.timeoutMilliseconds }, (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => resolve(data));
-      }).on("error", reject);
+    options: RequestInit = {}
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const id = setTimeout(
+      () => controller.abort(),
+      DnsHelper.timeoutMilliseconds
+    );
+
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
     });
+
+    clearTimeout(id);
+
+    return response;
   }
 }
 
