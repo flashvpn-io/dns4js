@@ -20,7 +20,7 @@ describe("DnsHelper", () => {
 
   describe("lookupARecords", () => {
     it("should return A records for a valid domain", async () => {
-      const result = await DnsHelper.lookupARecords("example.com");
+      const result = await DnsHelper.lookupARecords("google.com");
       expect(result).toBeInstanceOf(Array);
       expect(result.length).toBeGreaterThan(0);
       expect(result[0]).toMatch(/^\d+\.\d+\.\d+\.\d+$/);
