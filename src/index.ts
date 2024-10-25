@@ -1,12 +1,12 @@
 import { get } from "https";
 
-interface DnsRecord {
+export interface DnsRecord {
   web: string[];
   aff: string[];
   api: string[];
 }
 
-class DnsHelper {
+export class DnsHelper {
   static timeoutMilliseconds = 1000;
   static https = "https://";
 

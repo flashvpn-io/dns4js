@@ -1,6 +1,6 @@
 {
   "name": "@terraka-io/dns4js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A DNS library for JavaScript",
   "files": [
     "dist"

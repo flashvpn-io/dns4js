@@ -1,4 +1,4 @@
-import DnsHelper from "../src/index";
+import { DnsHelper, DnsRecord } from "../src/index";
 
 describe("DnsHelper", () => {
   describe("lookupTxt", () => {
