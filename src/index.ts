@@ -34,7 +34,6 @@ export class DnsHelper {
             if (answer.type === 16) {
               // TXT record type
               const rdata = answer.data;
-              console.log("Parsed TXT record:", rdata);
               return DnsHelper._parseData(rdata);
             }
           }
@@ -79,7 +78,6 @@ export class DnsHelper {
     dnsUrls: string[] = DnsHelper._defaultDnsUrls
   ): Promise<string[]> {
     if (domain.toLowerCase() === "localhost") {
-      console.log("Skipping DNS lookup for localhost");
       return ["127.0.0.1"];
     }
 
@@ -87,9 +85,6 @@ export class DnsHelper {
     if (DnsHelper._dnsCache.has(domain)) {
       const cachedResult = DnsHelper._dnsCache.get(domain);
       if (cachedResult && Date.now() - cachedResult.timestamp < 5 * 60 * 1000) {
-        console.log(
-          `Returning cached A records for ${domain}: ${cachedResult.ips}`
-        );
         return cachedResult.ips;
       }
     }
@@ -111,9 +106,6 @@ export class DnsHelper {
     // Cache the result
     DnsHelper._dnsCache.set(domain, { ips: uniqueIps, timestamp: Date.now() });
 
-    console.log(
-      `Found ${uniqueIps.length} unique IP(s) for ${domain}: ${uniqueIps}`
-    );
     return uniqueIps;
   }
 
@@ -136,9 +128,6 @@ export class DnsHelper {
         }
       }
 
-      console.log(
-        `Parsed ${ips.length} IP(s) from JSON response from ${dnsUrl} for ${requestQuery}`
-      );
       return ips;
     } catch (e) {
       console.warn(`Error querying ${dnsUrl} for ${requestQuery}: ${e}`);
