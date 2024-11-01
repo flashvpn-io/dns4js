@@ -1,5 +1,5 @@
 {
-  "name": "@terraka-io/dns4js",
+  "name": "@flashvpn-io/dns4js",
   "version": "1.0.2",
   "description": "A DNS library for JavaScript",
   "files": [
@@ -12,7 +12,7 @@
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/terraka-io/dns4js.git"
+    "url": "git+https://github.com/@flashvpn-io/dns4js.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -21,9 +21,9 @@
   "author": "Your Name",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/terraka-io/dns4js/issues"
+    "url": "https://github.com/@flashvpn-io/dns4js/issues"
   },
-  "homepage": "https://github.com/terraka-io/dns4js#readme",
+  "homepage": "https://github.com/flashvpn-io/dns4js#readme",
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && tsc",
