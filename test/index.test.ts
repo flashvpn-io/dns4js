@@ -3,7 +3,7 @@ import { DnsHelper, DnsRecord } from "../src/index";
 describe("DnsHelper", () => {
   describe("lookupTxt", () => {
     it("should return TXT record for a valid domain", async () => {
-      const result = await DnsHelper.lookupTxt("front.uat.flashvpn.io");
+      const result = await DnsHelper.lookupTxt("front.jetstream.site");
       expect(result).toBeTruthy();
       expect(result?.web).not.toHaveLength(0);
       expect(result?.aff).not.toHaveLength(0);
