@@ -8,6 +8,7 @@ export interface DnsRecord {
 export class DnsHelper {
   static timeoutMilliseconds = 5000;
   static https = "https://";
+  static cacheExpirationTime = 5 * 60 * 1000; // 5 minutes in milliseconds
 
   static _defaultDnsUrls: string[] = [
     "https://doh.pub/dns-query",
@@ -19,14 +20,32 @@ export class DnsHelper {
     new Map();
   static _txtCache: Map<string, { record: DnsRecord; timestamp: number }> = new Map();
 
+  private static _cleanExpiredCache<T>(
+    cache: Map<string, { timestamp: number; [key: string]: any }>
+  ): void {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+    
+    cache.forEach((value, key) => {
+      if (now - value.timestamp > DnsHelper.cacheExpirationTime) {
+        keysToDelete.push(key);
+      }
+    });
+
+    keysToDelete.forEach(key => cache.delete(key));
+  }
+
   static async lookupTxt(
     host: string,
     dnsUrls: string[] = DnsHelper._defaultDnsUrls
   ): Promise<DnsRecord | null> {
+    // 清理过期缓存
+    DnsHelper._cleanExpiredCache(DnsHelper._txtCache);
+
     // 检查缓存
     if (DnsHelper._txtCache.has(host)) {
       const cachedResult = DnsHelper._txtCache.get(host);
-      if (cachedResult && Date.now() - cachedResult.timestamp < 5 * 60 * 1000) {
+      if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
         return cachedResult.record;
       }
     }
@@ -98,10 +117,13 @@ export class DnsHelper {
       return ["127.0.0.1"];
     }
 
+    // 清理过期缓存
+    DnsHelper._cleanExpiredCache(DnsHelper._dnsCache);
+
     // Check cache first
     if (DnsHelper._dnsCache.has(domain)) {
       const cachedResult = DnsHelper._dnsCache.get(domain);
-      if (cachedResult && Date.now() - cachedResult.timestamp < 5 * 60 * 1000) {
+      if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
         return cachedResult.ips;
       }
     }
