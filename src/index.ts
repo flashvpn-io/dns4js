@@ -17,11 +17,20 @@ export class DnsHelper {
 
   static _dnsCache: Map<string, { ips: string[]; timestamp: number }> =
     new Map();
+  static _txtCache: Map<string, { record: DnsRecord; timestamp: number }> = new Map();
 
   static async lookupTxt(
     host: string,
     dnsUrls: string[] = DnsHelper._defaultDnsUrls
   ): Promise<DnsRecord | null> {
+    // 检查缓存
+    if (DnsHelper._txtCache.has(host)) {
+      const cachedResult = DnsHelper._txtCache.get(host);
+      if (cachedResult && Date.now() - cachedResult.timestamp < 5 * 60 * 1000) {
+        return cachedResult.record;
+      }
+    }
+
     for (const dnsUrl of dnsUrls) {
       try {
         const url = `${dnsUrl}?name=${host}&type=TXT`;
@@ -35,7 +44,10 @@ export class DnsHelper {
             if (answer.type === 16) {
               // TXT record type
               const rdata = answer.data;
-              return DnsHelper._parseData(rdata);
+              const record = DnsHelper._parseData(rdata);
+              // 缓存结果
+              DnsHelper._txtCache.set(host, { record, timestamp: Date.now() });
+              return record;
             }
           }
         }
