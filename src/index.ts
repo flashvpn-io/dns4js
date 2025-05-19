@@ -119,7 +119,7 @@ export class DnsHelper {
     }
 
      // Clear expired cache unconditionally
-     DnsHelper._cleanExpiredCache(DnsHelper._txtCache);
+     DnsHelper._cleanExpiredCache(DnsHelper._dnsCache);
 
     // Check cache first
     if (DnsHelper._dnsCache.has(domain)) {
