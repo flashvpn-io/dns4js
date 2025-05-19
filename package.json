@@ -1,6 +1,6 @@
 {
   "name": "@flashvpn-io/dns4js",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A DNS library for JavaScript",
   "files": [
     "dist"
