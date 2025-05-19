@@ -118,10 +118,11 @@ export class DnsHelper {
       return ["127.0.0.1"];
     }
 
+     // Clear expired cache unconditionally
+     DnsHelper._cleanExpiredCache(DnsHelper._txtCache);
+
     // Check cache first
     if (DnsHelper._dnsCache.has(domain)) {
-      // Clear expired cache
-      DnsHelper._cleanExpiredCache(DnsHelper._dnsCache);
 
       const cachedResult = DnsHelper._dnsCache.get(domain);
       if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
