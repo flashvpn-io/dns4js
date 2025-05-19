@@ -20,7 +20,7 @@ export class DnsHelper {
     new Map();
   static _txtCache: Map<string, { record: DnsRecord; timestamp: number }> = new Map();
 
-  private static _cleanExpiredCache<T>(
+  private static _cleanExpiredCache(
     cache: Map<string, { timestamp: number; [key: string]: any }>
   ): void {
     const now = Date.now();
