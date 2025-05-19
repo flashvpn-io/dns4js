@@ -39,11 +39,12 @@ export class DnsHelper {
     host: string,
     dnsUrls: string[] = DnsHelper._defaultDnsUrls
   ): Promise<DnsRecord | null> {
-    // 清理过期缓存
-    DnsHelper._cleanExpiredCache(DnsHelper._txtCache);
 
-    // 检查缓存
+    // Check cache
     if (DnsHelper._txtCache.has(host)) {
+      // Clear expired cache
+      DnsHelper._cleanExpiredCache(DnsHelper._txtCache);
+
       const cachedResult = DnsHelper._txtCache.get(host);
       if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
         return cachedResult.record;
@@ -64,7 +65,7 @@ export class DnsHelper {
               // TXT record type
               const rdata = answer.data;
               const record = DnsHelper._parseData(rdata);
-              // 缓存结果
+              // Cache record
               DnsHelper._txtCache.set(host, { record, timestamp: Date.now() });
               return record;
             }
@@ -117,11 +118,11 @@ export class DnsHelper {
       return ["127.0.0.1"];
     }
 
-    // 清理过期缓存
-    DnsHelper._cleanExpiredCache(DnsHelper._dnsCache);
-
     // Check cache first
     if (DnsHelper._dnsCache.has(domain)) {
+      // Clear expired cache
+      DnsHelper._cleanExpiredCache(DnsHelper._dnsCache);
+
       const cachedResult = DnsHelper._dnsCache.get(domain);
       if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
         return cachedResult.ips;
