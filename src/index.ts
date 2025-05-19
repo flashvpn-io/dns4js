@@ -8,6 +8,7 @@ export interface DnsRecord {
 export class DnsHelper {
   static timeoutMilliseconds = 5000;
   static https = "https://";
+  static cacheExpirationTime = 5 * 60 * 1000; // 5 minutes in milliseconds
 
   static _defaultDnsUrls: string[] = [
     "https://doh.pub/dns-query",
@@ -17,11 +18,39 @@ export class DnsHelper {
 
   static _dnsCache: Map<string, { ips: string[]; timestamp: number }> =
     new Map();
+  static _txtCache: Map<string, { record: DnsRecord; timestamp: number }> = new Map();
+
+  private static _cleanExpiredCache<T>(
+    cache: Map<string, { timestamp: number; [key: string]: any }>
+  ): void {
+    const now = Date.now();
+    const keysToDelete: string[] = [];
+    
+    cache.forEach((value, key) => {
+      if (now - value.timestamp > DnsHelper.cacheExpirationTime) {
+        keysToDelete.push(key);
+      }
+    });
+
+    keysToDelete.forEach(key => cache.delete(key));
+  }
 
   static async lookupTxt(
     host: string,
     dnsUrls: string[] = DnsHelper._defaultDnsUrls
   ): Promise<DnsRecord | null> {
+
+    // Check cache
+    if (DnsHelper._txtCache.has(host)) {
+      // Clear expired cache
+      DnsHelper._cleanExpiredCache(DnsHelper._txtCache);
+
+      const cachedResult = DnsHelper._txtCache.get(host);
+      if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
+        return cachedResult.record;
+      }
+    }
+
     for (const dnsUrl of dnsUrls) {
       try {
         const url = `${dnsUrl}?name=${host}&type=TXT`;
@@ -35,7 +64,10 @@ export class DnsHelper {
             if (answer.type === 16) {
               // TXT record type
               const rdata = answer.data;
-              return DnsHelper._parseData(rdata);
+              const record = DnsHelper._parseData(rdata);
+              // Cache record
+              DnsHelper._txtCache.set(host, { record, timestamp: Date.now() });
+              return record;
             }
           }
         }
@@ -86,10 +118,14 @@ export class DnsHelper {
       return ["127.0.0.1"];
     }
 
+     // Clear expired cache unconditionally
+     DnsHelper._cleanExpiredCache(DnsHelper._txtCache);
+
     // Check cache first
     if (DnsHelper._dnsCache.has(domain)) {
+
       const cachedResult = DnsHelper._dnsCache.get(domain);
-      if (cachedResult && Date.now() - cachedResult.timestamp < 5 * 60 * 1000) {
+      if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
         return cachedResult.ips;
       }
     }
