@@ -3,6 +3,7 @@ export interface DnsRecord {
   aff: string[];
   api: string[];
   app: string[];
+  landing: string[];
 }
 
 export class DnsHelper {
@@ -87,7 +88,8 @@ export class DnsHelper {
     let web: string[] = [],
       aff: string[] = [],
       api: string[] = [],
-      app: string[] = [];
+      app: string[] = [],
+      landing: string[] = [];
 
     for (const part of parts) {
       const [key, value] = part.split("=");
@@ -104,10 +106,13 @@ export class DnsHelper {
         case "app":
           app = value.split(",");
           break;
+        case "landing":
+          landing = value.split(",");
+          break;
       }
     }
 
-    return { web, aff, api, app };
+    return { web, aff, api, app, landing };
   }
 
   static async lookupARecords(
