@@ -1,6 +1,6 @@
 {
   "name": "@flashvpn-io/dns4js",
-  "version": "1.0.5",
+  "version": "1.0.5-beta.1",
   "description": "A DNS library for JavaScript",
   "files": [
     "dist"
@@ -17,7 +17,11 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "keywords": ["dns", "javascript", "typescript"],
+  "keywords": [
+    "dns",
+    "javascript",
+    "typescript"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "bugs": {
@@ -40,6 +44,13 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"]
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
   }
 }
