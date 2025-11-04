@@ -10,6 +10,7 @@ describe("DnsHelper", () => {
       expect(result?.api).not.toHaveLength(0);
       expect(result?.app).not.toHaveLength(0);
       expect(result?.landing).toBeDefined();
+      expect(result?.guide).toBeDefined();
     });
 
     it("should return null for a domain without TXT record", async () => {
@@ -19,6 +20,7 @@ describe("DnsHelper", () => {
       expect(result?.api).toHaveLength(0);
       expect(result?.app).toHaveLength(0);
       expect(result?.landing).toHaveLength(0);
+      expect(result?.guide).toHaveLength(0);
     });
   });
 
@@ -44,7 +46,7 @@ describe("DnsHelper", () => {
   describe("_parseData", () => {
     it("should correctly parse TXT record data", () => {
       const data =
-        '"host=example.com:web=www.example.com:aff=affiliate.example.com:api=api.example.com:app=app.example.com:landing=landing.example.com"';
+        '"host=example.com:web=www.example.com:aff=affiliate.example.com:api=api.example.com:app=app.example.com:landing=landing.example.com:guide=guide.example.com"';
       const result = DnsHelper._parseData(data);
       expect(result).toEqual({
         web: ["www.example.com"],
@@ -52,6 +54,7 @@ describe("DnsHelper", () => {
         api: ["api.example.com"],
         app: ["app.example.com"],
         landing: ["landing.example.com"],
+        guide: ["guide.example.com"],
       });
     });
   });
