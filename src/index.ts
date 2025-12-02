@@ -1,10 +1,4 @@
-export interface DnsRecord {
-  web: string[];
-  aff: string[];
-  api: string[];
-  app: string[];
-  landing: string[];
-}
+export type DnsRecord<T extends Record<string, string[]> = Record<string, string[]>> = T;
 
 export class DnsHelper {
   static timeoutMilliseconds = 5000;
@@ -19,7 +13,7 @@ export class DnsHelper {
 
   static _dnsCache: Map<string, { ips: string[]; timestamp: number }> =
     new Map();
-  static _txtCache: Map<string, { record: DnsRecord; timestamp: number }> = new Map();
+  static _txtCache: Map<string, { record: Record<string, string[]>; timestamp: number }> = new Map();
 
   private static _cleanExpiredCache<T>(
     cache: Map<string, { timestamp: number; [key: string]: any }>
@@ -36,10 +30,10 @@ export class DnsHelper {
     keysToDelete.forEach(key => cache.delete(key));
   }
 
-  static async lookupTxt(
+  static async lookupTxt<T extends Record<string, string[]> = Record<string, string[]>>(
     host: string,
     dnsUrls: string[] = DnsHelper._defaultDnsUrls
-  ): Promise<DnsRecord | null> {
+  ): Promise<DnsRecord<T> | null> {
 
     // Check cache
     if (DnsHelper._txtCache.has(host)) {
@@ -48,7 +42,7 @@ export class DnsHelper {
 
       const cachedResult = DnsHelper._txtCache.get(host);
       if (cachedResult && Date.now() - cachedResult.timestamp < DnsHelper.cacheExpirationTime) {
-        return cachedResult.record;
+        return cachedResult.record as DnsRecord<T>;
       }
     }
 
@@ -65,7 +59,7 @@ export class DnsHelper {
             if (answer.type === 16) {
               // TXT record type
               const rdata = answer.data;
-              const record = DnsHelper._parseData(rdata);
+              const record = DnsHelper._parseData<T>(rdata);
               // Cache record
               DnsHelper._txtCache.set(host, { record, timestamp: Date.now() });
               return record;
@@ -80,39 +74,27 @@ export class DnsHelper {
     return null;
   }
 
-  static _parseData(data: string): DnsRecord {
+  static _parseData<T extends Record<string, string[]> = Record<string, string[]>>(data: string): DnsRecord<T> {
     // Strip the leading and trailing double quotes from the data
     data = data.replace(/^"|"$/g, "");
 
     const parts = data.split(":");
-    let web: string[] = [],
-      aff: string[] = [],
-      api: string[] = [],
-      app: string[] = [],
-      landing: string[] = [];
+    const record: Record<string, string[]> = {};
 
     for (const part of parts) {
-      const [key, value] = part.split("=");
-      switch (key) {
-        case "web":
-          web = value.split(",");
-          break;
-        case "aff":
-          aff = value.split(",");
-          break;
-        case "api":
-          api = value.split(",");
-          break;
-        case "app":
-          app = value.split(",");
-          break;
-        case "landing":
-          landing = value.split(",");
-          break;
+      if (!part) continue; // Skip empty parts
+      const equalIndex = part.indexOf("=");
+      if (equalIndex === -1) continue; // Skip parts without "="
+      
+      const key = part.substring(0, equalIndex).trim();
+      const value = part.substring(equalIndex + 1).trim();
+      
+      if (key && value) {
+        record[key] = value.split(",").map(v => v.trim()).filter(v => v.length > 0);
       }
     }
 
-    return { web, aff, api, app, landing };
+    return record as DnsRecord<T>;
   }
 
   static async lookupARecords(

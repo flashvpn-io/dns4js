@@ -1,0 +1,128 @@
+name: Publish Prerelease to GitHub Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Prerelease tag (beta, alpha, rc, next)'
+        required: false
+        default: 'beta'
+        type: choice
+        options:
+          - beta
+          - alpha
+          - rc
+          - next
+      version:
+        description: 'Version to publish (e.g., 1.0.6-beta.1). Leave empty to auto-increment.'
+        required: false
+        type: string
+  push:
+    branches:
+      - release/**
+      - 'release/*'
+      - hotfix/**
+      - 'hotfix/*'
+
+jobs:
+  publish-prerelease:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@flashvpn-io"
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build
+
+      - name: Determine prerelease tag
+        id: prerelease_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            # Default to beta for release branches
+            echo "tag=beta" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump version to prerelease
+        id: bump_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
+            # Use provided version
+            NEW_VERSION="${{ github.event.inputs.version }}"
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "Using provided version: $NEW_VERSION"
+          else
+            # Auto-increment prerelease version
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            PRERELEASE_TAG="${{ steps.prerelease_tag.outputs.tag }}"
+            
+            # Check if current version already has this prerelease tag
+            if [[ "$CURRENT_VERSION" =~ -$PRERELEASE_TAG\. ]]; then
+              # Increment the prerelease number
+              PRERELEASE_NUM=$(echo $CURRENT_VERSION | sed -E "s/.*-$PRERELEASE_TAG\.([0-9]+).*/\1/")
+              NEW_PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
+              BASE_VERSION=$(echo $CURRENT_VERSION | sed -E "s/-$PRERELEASE_TAG\.[0-9]+.*$//")
+              NEW_VERSION="$BASE_VERSION-$PRERELEASE_TAG.$NEW_PRERELEASE_NUM"
+            else
+              # Create first prerelease version
+              BASE_VERSION=$(echo $CURRENT_VERSION | sed -E 's/-[a-z]+\.?[0-9]*$//')
+              NEW_VERSION="$BASE_VERSION-$PRERELEASE_TAG.1"
+            fi
+            
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "Old version: $CURRENT_VERSION"
+            echo "New version: $NEW_VERSION"
+          fi
+
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.bump_version.outputs.version }} --no-git-tag-version
+
+      - name: Publish to GitHub Packages with prerelease tag
+        run: |
+          npm publish --tag ${{ steps.prerelease_tag.outputs.tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit version change
+        run: |
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.bump_version.outputs.version }}" || exit 0
+          git push origin HEAD:${{ github.ref }} || exit 0
+
+      - name: Create Git tag
+        run: |
+          git tag "v${{ steps.bump_version.outputs.version }}" || exit 0
+          git push origin "v${{ steps.bump_version.outputs.version }}" || exit 0
+
+      - name: Output published version
+        run: |
+          echo "✅ Published version ${{ steps.bump_version.outputs.version }} to GitHub Packages with tag: ${{ steps.prerelease_tag.outputs.tag }}"
+          echo "📦 Install with: npm install @flashvpn-io/dns4js@${{ steps.prerelease_tag.outputs.tag }}"
+          echo "⚠️  Note: You may need to configure .npmrc with: @flashvpn-io:registry=https://npm.pkg.github.com"
+
